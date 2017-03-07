@@ -10,15 +10,23 @@ public class WaveManagerScript : MonoBehaviour {
     public int numWaves = 10;
     public bool waveCurrentlyRunning;
 
-    private IEnumerator waveCoroutine;
+    private List<IEnumerator> waveCoroutines;
+    private IEnumerator allWaveCoroutine;
     private int currentWave;
     private bool wavesStarted = false;
     private bool paused;
+    private bool wasPaused;
     // Use this for initialization
     void Start() {
-        currentWave = 1;
-        waveCoroutine = BeginSpawning();
+        currentWave = 0;
+        allWaveCoroutine = BeginSpawning();
+        waveCoroutines = new List<IEnumerator>();
+        for(int i = 1; i <= numWaves; ++i)
+        {
+            waveCoroutines.Add(SpawnNextWave(i));
+        }
         paused = false;
+        wasPaused = false;
     }
 
     // Update is called once per frame
@@ -33,18 +41,23 @@ public class WaveManagerScript : MonoBehaviour {
         }
         if (Input.GetKeyDown(KeyCode.P))
         {
-            if(paused)
+            paused = !paused;
+        }
+        if (!paused && wasPaused)
+        {
+            Debug.Log("Unpaused");
+            StartCoroutine(allWaveCoroutine);
+            for(int runningCoroutines = 0; runningCoroutines < currentWave; ++runningCoroutines)
             {
-                Debug.Log("Unpaused");
-                StartCoroutine(waveCoroutine);
-                paused = false;
+                StartCoroutine(waveCoroutines[runningCoroutines]);
             }
-            else
-            {
-                Debug.Log("Paused");
-                StopCoroutine(waveCoroutine);
-                paused = true;
-            }
+            wasPaused = false;
+        }
+        else if (paused && !wasPaused)
+        {
+            Debug.Log("Paused");
+            StopAllCoroutines();
+            wasPaused = true;
         }
         if (Input.GetKeyDown(KeyCode.A))
         {
@@ -57,19 +70,19 @@ public class WaveManagerScript : MonoBehaviour {
     }
     public void StartSpawningButton()
     {
-        StartCoroutine(waveCoroutine);
+        StartCoroutine(allWaveCoroutine);
     }
     public void StartNextWaveButton()
     {
-        if (currentWave <= numWaves)
+        if (wavesStarted && currentWave <= numWaves)
         {
-            StartCoroutine(SpawnNextWave(currentWave));
+            StartCoroutine(waveCoroutines[currentWave]);
             ++currentWave;
         }
     }
     public IEnumerator BeginSpawning()
     {
-        StartCoroutine(SpawnNextWave(currentWave));
+        StartCoroutine(waveCoroutines[currentWave]);
         ++currentWave;
         for (; currentWave < numWaves; ++currentWave)
         {
@@ -80,12 +93,16 @@ public class WaveManagerScript : MonoBehaviour {
                     yield return new WaitWhile(() => waveCurrentlyRunning);
                     timePassed = 0;
                 }
-                //Debug.Log("Time Remaining: " + (timeBetweenWaves - timePassed));
+                if (currentWave > numWaves)
+                {
+                    break;
+                }
+                Debug.Log("Time Remaining: " + (timeBetweenWaves - timePassed));
                 yield return new WaitForSeconds(1.0f);
             }
-            if(currentWave < numWaves)
+            if(currentWave <= numWaves)
             {
-                StartCoroutine(SpawnNextWave(currentWave));
+                StartCoroutine(waveCoroutines[currentWave]);
             }
         }
     }
@@ -97,7 +114,7 @@ public class WaveManagerScript : MonoBehaviour {
             SpawnEnemy(currentWave, i);
             yield return new WaitForSeconds(timeBetweenEnemies);
         }
-        if (currentWave == this.currentWave - 1)
+        if (currentWave == this.currentWave)
         {
             waveCurrentlyRunning = false;
         }

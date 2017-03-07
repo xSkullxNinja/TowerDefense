@@ -13,11 +13,12 @@ public class WaveManagerScript : MonoBehaviour {
     private IEnumerator waveCoroutine;
     private int currentWave;
     private bool wavesStarted = false;
-
+    private bool paused;
     // Use this for initialization
     void Start() {
         currentWave = 1;
         waveCoroutine = BeginSpawning();
+        paused = false;
     }
 
     // Update is called once per frame
@@ -30,12 +31,19 @@ public class WaveManagerScript : MonoBehaviour {
                 StartSpawningButton();
             }
         }
-        else
+        if (Input.GetKeyDown(KeyCode.P))
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            if(paused)
             {
-                wavesStarted = false;
+                Debug.Log("Unpaused");
+                StartCoroutine(waveCoroutine);
+                paused = false;
+            }
+            else
+            {
+                Debug.Log("Paused");
                 StopCoroutine(waveCoroutine);
+                paused = true;
             }
         }
         if (Input.GetKeyDown(KeyCode.A))
@@ -75,7 +83,10 @@ public class WaveManagerScript : MonoBehaviour {
                 //Debug.Log("Time Remaining: " + (timeBetweenWaves - timePassed));
                 yield return new WaitForSeconds(1.0f);
             }
-            StartCoroutine(SpawnNextWave(currentWave));
+            if(currentWave < numWaves)
+            {
+                StartCoroutine(SpawnNextWave(currentWave));
+            }
         }
     }
     public IEnumerator SpawnNextWave(int currentWave)

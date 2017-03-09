@@ -3,28 +3,31 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class WaveManagerScript : MonoBehaviour {
-
+    public GameObject EnemyPrefab;
+    public GameObject EnemyPath;
     public float timeBetweenEnemies = 1;
-    public float timeBetweenWaves = 10;
     public int enemiesInWave = 5;
     public int numWaves = 10;
-    public bool waveCurrentlyRunning;
+    public bool waveCurrentlyRunning = false;
 
     private List<IEnumerator> waveCoroutines;
     private IEnumerator allWaveCoroutine;
+    private int timeBetweenWaves;
     private int currentWave;
-    private bool wavesStarted = false;
+    private bool wavesStarted;
     private bool paused;
     private bool wasPaused;
     // Use this for initialization
     void Start() {
-        currentWave = 0;
-        allWaveCoroutine = BeginSpawning();
         waveCoroutines = new List<IEnumerator>();
         for(int i = 1; i <= numWaves; ++i)
         {
             waveCoroutines.Add(SpawnNextWave(i));
         }
+        allWaveCoroutine = BeginSpawning();
+        timeBetweenWaves = 30;
+        currentWave = 0;
+        wavesStarted = false;
         paused = false;
         wasPaused = false;
     }
@@ -121,6 +124,10 @@ public class WaveManagerScript : MonoBehaviour {
     }
     public void SpawnEnemy(int currentWave, int enemyNum)
     {
-        Debug.Log("EnemySpawning: Wave: " + currentWave + " EnemyNum: " + enemyNum);
+        //Enemy = GetEnemyInfo(currentWave, enemyNum);
+        GameObject enemyUnit = Instantiate(EnemyPrefab.gameObject);
+        enemyUnit.name = "Enemy: " + currentWave + "-" + enemyNum;
+        enemyUnit.GetComponent<PathFollowingScript>().Path = EnemyPath;
+        //Debug.Log("EnemySpawning: Wave: " + currentWave + " EnemyNum: " + enemyNum);
     }
 }
